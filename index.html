@@ -361,14 +361,15 @@
     .lb-table td { padding: 1rem; font-size: 0.95rem; vertical-align: middle; }
     .lb-table td.num { text-align: center; font-family:'Playfair Display',serif; font-weight: 700; font-size: 1.1rem; }
     .lb-chip {
-      display: inline-flex; align-items: center; gap: 0.3rem;
-      padding: 0.2rem 0.5rem;
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      padding: 0.2rem 0.6rem 0.2rem 0.4rem;
       border-radius: 999px;
       background: rgba(14,14,14,0.06);
       font-size: 0.78rem;
       font-weight: 500;
       margin: 0.15rem 0.2rem 0.15rem 0;
     }
+    .lb-flag { font-size: 0.95rem; line-height: 1; }
     .lb-chip.t1 { background: rgba(14,14,14,0.92); color:#fff; }
     .lb-chip.t2 { background: rgba(107,30,46,0.92); color:#fff; }
     .lb-chip.t3 { background: rgba(197,165,114,0.92); color:#fff; }
@@ -381,14 +382,21 @@
     /* ── Toast ─────────────────────────────────────────────────────── */
     .toast {
       position: fixed; bottom: 5.5rem; left: 50%;
-      transform: translateX(-50%) translateY(120%);
+      transform: translateX(-50%) translateY(20px);
       background: var(--ink); color: #fff;
       padding: 0.9rem 1.4rem; border-radius: 999px;
       font-size: 0.9rem; font-weight: 500;
-      transition: transform 0.3s ease;
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s;
       z-index: 60;
     }
-    .toast.show { transform: translateX(-50%) translateY(0); }
+    .toast.show {
+      opacity: 1;
+      visibility: visible;
+      transform: translateX(-50%) translateY(0);
+    }
 
     /* ── Responsive ────────────────────────────────────────────────── */
     @media (max-width: 760px) {
@@ -495,6 +503,8 @@ const WC_TIERS = [
 const PICKS_PER_TIER = { 1:1, 2:1, 3:1, 4:1, 5:2 };
 const TOTAL_PICKS = Object.values(PICKS_PER_TIER).reduce((a,b)=>a+b,0);
 const selected = { 1:null, 2:null, 3:null, 4:null, 5:[] };
+const TEAM_FLAGS = {};
+WC_TIERS.forEach(tier => tier.teams.forEach(t => { TEAM_FLAGS[t.name] = t.flag; }));
 
 const SCORING = [
   ["Group win","2 pts"], ["Group draw","1 pt"], ["Advance from groups","+3 pts"],
@@ -647,7 +657,7 @@ async function loadLeaderboard() {
     let html = `<div class="lb-card"><table class="lb-table">
       <thead><tr><th class="num">#</th><th>Player</th><th>Picks</th>${started?'<th class="num">Pts</th>':''}</tr></thead><tbody>`;
     rows.forEach(r => {
-      const chips = r.teams.map(t => `<span class="lb-chip ${t.cls}">${t.name}${started && teamPts[t.name] ? ` · ${teamPts[t.name]}` : ""}</span>`).join("");
+      const chips = r.teams.map(t => `<span class="lb-chip ${t.cls}"><span class="lb-flag">${TEAM_FLAGS[t.name] || ""}</span>${t.name}${started && teamPts[t.name] ? ` · ${teamPts[t.name]}` : ""}</span>`).join("");
       html += `<tr><td class="num">${r.pos}</td><td style="font-weight:700">${r.name}</td><td>${chips}</td>${started?`<td class="num">${r.total}</td>`:''}</tr>`;
     });
     html += `</tbody></table></div>`;

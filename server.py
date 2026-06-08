@@ -4,15 +4,22 @@
 import http.server
 import json
 import os
+import sys
 import urllib.request
 import time
 
 PORT = int(os.environ.get("PORT", 8080))
 
 # ── Supabase ──────────────────────────────────────────────────────────────────
-# Replace these two values with your new Supabase project credentials
-SUPABASE_URL = "YOUR_SUPABASE_URL"          # e.g. https://xxxx.supabase.co
-SUPABASE_KEY = "YOUR_SUPABASE_ANON_KEY"     # long JWT from Settings → API
+# Set these in your hosting provider's environment variables (Render → Environment).
+# For local dev:  export SUPABASE_URL=...  export SUPABASE_KEY=...
+SUPABASE_URL = os.environ.get("SUPABASE_URL", "").rstrip("/")
+SUPABASE_KEY = os.environ.get("SUPABASE_KEY", "")
+
+if not SUPABASE_URL or not SUPABASE_KEY:
+    print("ERROR: SUPABASE_URL and SUPABASE_KEY environment variables must be set.",
+          file=sys.stderr)
+    sys.exit(1)
 # ─────────────────────────────────────────────────────────────────────────────
 
 SUPABASE_HEADERS = {
@@ -145,31 +152,42 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             super().do_GET()
 
     def do_POST(self):
-        if self.path == "/api/wc/picks":
-            length = int(self.headers.get("Content-Length", 0))
-            body = json.loads(self.rfile.read(length))
+        try:
+            if self.path == "/api/wc/picks":
+                length = int(self.headers.get("Content-Length", 0))
+                raw = self.rfile.read(length) if length > 0 else b""
+                try:
+                    body = json.loads(raw) if raw else {}
+                except json.JSONDecodeError as e:
+                    self.send_json(400, {"error": f"Invalid JSON body: {e}"})
+                    return
 
-            name  = (body.get("name") or "").strip()
-            tier1 = (body.get("tier1") or "").strip()
-            tier2 = (body.get("tier2") or "").strip()
-            tier3 = (body.get("tier3") or "").strip()
-            tier4 = (body.get("tier4") or "").strip()
-            tier5 = (body.get("tier5") or "").strip()
+                name  = (body.get("name") or "").strip()
+                tier1 = (body.get("tier1") or "").strip()
+                tier2 = (body.get("tier2") or "").strip()
+                tier3 = (body.get("tier3") or "").strip()
+                tier4 = (body.get("tier4") or "").strip()
+                tier5 = (body.get("tier5") or "").strip()
 
-            if not all([name, tier1, tier2, tier3, tier4, tier5]):
-                self.send_json(400, {"error": "Name and all 5 tier picks are required."})
-                return
+                if not all([name, tier1, tier2, tier3, tier4, tier5]):
+                    self.send_json(400, {"error": "Name and all 5 tier picks are required."})
+                    return
 
-            ok, err = save_wc_pick(name, tier1, tier2, tier3, tier4, tier5)
-            if ok:
-                self.send_json(200, {"ok": True})
-            elif err == "duplicate":
-                self.send_json(409, {"error": "Picks already submitted for that name."})
+                ok, err = save_wc_pick(name, tier1, tier2, tier3, tier4, tier5)
+                if ok:
+                    self.send_json(200, {"ok": True})
+                elif err == "duplicate":
+                    self.send_json(409, {"error": "Picks already submitted for that name."})
+                else:
+                    self.send_json(500, {"error": err or "Failed to save."})
             else:
-                self.send_json(500, {"error": err or "Failed to save."})
-        else:
-            self.send_response(404)
-            self.end_headers()
+                self.send_json(404, {"error": "Not found"})
+        except Exception as e:
+            print(f"do_POST crash: {e}")
+            try:
+                self.send_json(500, {"error": f"Server error: {e}"})
+            except Exception:
+                pass
 
     def log_message(self, fmt, *args):
         print(f"[{self.address_string()}] {fmt % args}")

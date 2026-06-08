@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The MH World Cup Draft</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;700;800&family=Inter+Tight:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --ink:        #0E0E0E;
+      --ink-soft:   #3a3a3a;
+      --ink-muted:  #6a6a6a;
+      --paper:      #F4EFE3;
+      --paper-2:    #EAE2CB;
+      --champagne:  #D9BF82;
+      --champagne-2:#B89455;
+      --gold-line:  #C5A572;
+      --burgundy:   #6B1E2E;
+      --bronze:     #8B6F47;
+      --beige:      #B8A88A;
+      --t1: #0E0E0E;
+      --t2: #6B1E2E;
+      --t3: #C5A572;
+      --t4: #8B6F47;
+      --t5: #B8A88A;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    html { scroll-behavior:smooth; }
+    body {
+      font-family: 'Inter Tight', system-ui, sans-serif;
+      background: var(--paper);
+      color: var(--ink);
+      min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      line-height: 1.5;
+    }
+
+    /* ── Hero ───────────────────────────────────────────────────────── */
+    .hero {
+      position: relative;
+      background:
+        radial-gradient(1200px 400px at 80% -10%, rgba(197,165,114,0.18), transparent 60%),
+        linear-gradient(135deg, #2A2A2A 0%, #1F1F1F 50%, #161616 100%);
+      padding: 6.5rem 1.5rem 5.5rem;
+      text-align: center;
+      overflow: hidden;
+      color: #F4EFE3;
+    }
+    .hero::after {
+      content: "";
+      position: absolute; inset: 0;
+      background-image: radial-gradient(rgba(255,255,255,0.06) 1px, transparent 1px);
+      background-size: 22px 22px;
+      pointer-events: none;
+    }
+    .hero-inner { position: relative; max-width: 900px; margin: 0 auto; z-index: 1; }
+    .eyebrow {
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.32em;
+      text-transform: uppercase;
+      color: var(--champagne);
+      margin-bottom: 1.3rem;
+    }
+    .eyebrow::before, .eyebrow::after {
+      content: "";
+      display: inline-block;
+      width: 22px; height: 1px;
+      background: var(--champagne);
+      vertical-align: middle;
+      margin: 0 0.7rem;
+      opacity: 0.6;
+    }
+    .hero h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(2.6rem, 6vw, 4.4rem);
+      font-weight: 700;
+      letter-spacing: -0.015em;
+      line-height: 1.05;
+      color: #F4EFE3;
+    }
+    .hero h1 em {
+      font-style: italic;
+      font-weight: 500;
+      background: linear-gradient(135deg, #E8D5A4 0%, #C5A572 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .hero-sub {
+      margin-top: 1.4rem;
+      font-size: 1rem;
+      color: rgba(244,239,227,0.72);
+      max-width: 540px;
+      margin-left: auto; margin-right: auto;
+    }
+    .countdown {
+      display: inline-flex;
+      gap: 1.2rem;
+      margin-top: 2rem;
+      padding: 0.9rem 1.5rem;
+      background: rgba(244,239,227,0.08);
+      border: 1px solid rgba(197,165,114,0.25);
+      color: #fff;
+      border-radius: 999px;
+      backdrop-filter: blur(8px);
+    }
+    .countdown-cell { text-align: center; min-width: 56px; }
+    .countdown-num { font-family:'Playfair Display',serif; font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; }
+    .countdown-lbl { font-size: 0.6rem; letter-spacing: 0.22em; text-transform: uppercase; opacity: 0.7; margin-top: 0.15rem; }
+
+    /* ── Sticky nav ─────────────────────────────────────────────────── */
+    .nav-wrap { position: sticky; top: 0; z-index: 50; }
+    .nav {
+      background: rgba(244,239,227,0.78);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-bottom: 1px solid rgba(14,14,14,0.08);
+      display: flex;
+      justify-content: center;
+      gap: 2.2rem;
+      padding: 0 1rem;
+    }
+    .nav-btn {
+      position: relative;
+      background: none; border: none;
+      font-family: inherit;
+      font-size: 0.78rem;
+      font-weight: 600;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+      padding: 1.05rem 0.4rem;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+    .nav-btn:hover { color: var(--ink); }
+    .nav-btn::after {
+      content: "";
+      position: absolute;
+      left: 50%; bottom: 0;
+      width: 0; height: 2px;
+      background: var(--champagne-2);
+      transition: all 0.3s ease;
+      transform: translateX(-50%);
+    }
+    .nav-btn.active { color: var(--ink); }
+    .nav-btn.active::after { width: 28px; }
+
+    /* ── Sections ──────────────────────────────────────────────────── */
+    .section { display: none; padding: 4rem 1.5rem 8rem; }
+    .section.active { display: block; }
+    .wrap { max-width: 980px; margin: 0 auto; }
+    .section-eyebrow {
+      font-size: 0.7rem;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--champagne-2);
+      font-weight: 700;
+      margin-bottom: 0.6rem;
+    }
+    .section-title {
+      font-family: 'Playfair Display', serif;
+      font-size: clamp(1.8rem, 3.5vw, 2.6rem);
+      letter-spacing: -0.015em;
+      line-height: 1.1;
+      margin-bottom: 0.7rem;
+    }
+    .section-lead { color: var(--ink-soft); max-width: 560px; margin-bottom: 2.8rem; font-size: 0.98rem; }
+
+    /* ── Scoring strip ─────────────────────────────────────────────── */
+    .scoring {
+      background: #fff;
+      border: 1px solid rgba(14,14,14,0.08);
+      border-radius: 14px;
+      padding: 1.5rem 1.8rem;
+      margin-bottom: 3rem;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 0.6rem 1.6rem;
+    }
+    .scoring-row { display: flex; justify-content: space-between; font-size: 0.85rem; padding: 0.3rem 0; border-bottom: 1px dashed rgba(14,14,14,0.08); }
+    .scoring-row span:last-child { font-weight: 700; color: var(--champagne-2); }
+
+    /* ── Name field ────────────────────────────────────────────────── */
+    .field { margin-bottom: 2.5rem; }
+    .field label {
+      display: block;
+      font-size: 0.7rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+      font-weight: 600;
+      margin-bottom: 0.6rem;
+    }
+    .field input {
+      width: 100%;
+      padding: 1rem 1.2rem;
+      background: #fff;
+      border: 1px solid rgba(14,14,14,0.1);
+      border-radius: 12px;
+      font: inherit;
+      font-size: 1.05rem;
+      color: var(--ink);
+      transition: all 0.2s;
+    }
+    .field input:focus {
+      outline: none;
+      border-color: var(--champagne-2);
+      box-shadow: 0 0 0 4px rgba(197,165,114,0.15);
+    }
+
+    /* ── Tier rows (editorial) ─────────────────────────────────────── */
+    .tier {
+      display: grid;
+      grid-template-columns: 200px 1fr;
+      gap: 2rem;
+      padding: 2.2rem 0;
+      border-top: 1px solid rgba(14,14,14,0.1);
+    }
+    .tier:last-of-type { border-bottom: 1px solid rgba(14,14,14,0.1); }
+    .tier-meta { position: relative; }
+    .tier-num {
+      font-family: 'Playfair Display', serif;
+      font-size: 3.4rem;
+      line-height: 1;
+      font-weight: 700;
+      color: var(--tier-color);
+      letter-spacing: -0.04em;
+    }
+    .tier-name {
+      font-size: 0.7rem;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+      font-weight: 700;
+      margin-top: 0.4rem;
+    }
+    .tier-label {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.3rem;
+      font-style: italic;
+      color: var(--ink);
+      margin-top: 0.1rem;
+    }
+    .tier-pick {
+      display: inline-block;
+      margin-top: 0.9rem;
+      padding: 0.3rem 0.7rem;
+      background: var(--tier-color);
+      color: #fff;
+      font-size: 0.65rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      font-weight: 700;
+      border-radius: 999px;
+    }
+    .tier.t1 { --tier-color: var(--t1); }
+    .tier.t2 { --tier-color: var(--t2); }
+    .tier.t3 { --tier-color: var(--t3); }
+    .tier.t4 { --tier-color: var(--t4); }
+    .tier.t5 { --tier-color: var(--t5); }
+
+    .pills { display: flex; flex-wrap: wrap; gap: 0.55rem; align-content: flex-start; }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+      padding: 0.55rem 0.95rem 0.55rem 0.7rem;
+      background: #fff;
+      border: 1px solid rgba(14,14,14,0.1);
+      border-radius: 999px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      user-select: none;
+    }
+    .pill:hover {
+      border-color: var(--tier-color);
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(14,14,14,0.06);
+    }
+    .pill .flag { font-size: 1.15rem; line-height: 1; }
+    .pill .name { font-size: 0.85rem; font-weight: 600; color: var(--ink); }
+    .pill .odds { font-size: 0.72rem; color: var(--ink-muted); font-variant-numeric: tabular-nums; }
+    .pill.selected {
+      background: var(--tier-color);
+      border-color: var(--tier-color);
+      box-shadow: 0 4px 14px rgba(14,14,14,0.18), 0 0 0 3px rgba(197,165,114,0.25);
+    }
+    .pill.selected .name,
+    .pill.selected .odds { color: #fff; }
+    .pill.selected .odds { opacity: 0.85; }
+
+    /* ── Submit ────────────────────────────────────────────────────── */
+    .submit-wrap { margin-top: 3rem; }
+    .submit-btn {
+      width: 100%;
+      padding: 1.3rem 1.5rem;
+      background: linear-gradient(135deg, #E8D5A4 0%, #C5A572 60%, #A88340 100%);
+      color: var(--ink);
+      border: none;
+      border-radius: 14px;
+      font: inherit;
+      font-size: 0.95rem;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.25s;
+      display: flex; align-items: center; justify-content: center; gap: 0.8rem;
+    }
+    .submit-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 30px rgba(168,131,64,0.35);
+    }
+    .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; }
+    .submit-btn .arrow { display: inline-block; transition: transform 0.25s; }
+    .submit-btn:hover .arrow { transform: translateX(6px); }
+    .form-msg { margin-top: 1rem; padding: 0.9rem 1.1rem; border-radius: 10px; font-size: 0.9rem; font-weight: 600; display: none; }
+    .form-msg.success { background: #e9f4ea; color: #1a6b2a; display: block; }
+    .form-msg.error   { background: #fdecea; color: #c62828; display: block; }
+
+    /* ── Progress pill ─────────────────────────────────────────────── */
+    .progress {
+      position: fixed;
+      right: 1.5rem;
+      bottom: 1.5rem;
+      background: rgba(14,14,14,0.92);
+      color: #fff;
+      padding: 0.8rem 1.1rem 0.85rem;
+      border-radius: 999px;
+      backdrop-filter: blur(8px);
+      box-shadow: 0 12px 40px rgba(14,14,14,0.3);
+      z-index: 40;
+      min-width: 180px;
+    }
+    .progress-top { display: flex; justify-content: space-between; font-size: 0.7rem; letter-spacing: 0.16em; text-transform: uppercase; margin-bottom: 0.45rem; }
+    .progress-top strong { font-family:'Playfair Display',serif; font-size: 0.95rem; letter-spacing: 0; }
+    .progress-bar { height: 3px; background: rgba(255,255,255,0.18); border-radius: 999px; overflow: hidden; }
+    .progress-fill { height: 100%; background: linear-gradient(90deg, var(--champagne) 0%, var(--champagne-2) 100%); transition: width 0.4s ease; }
+
+    /* ── Leaderboard / Standings (light reuse) ─────────────────────── */
+    .lb-card {
+      background: #fff;
+      border: 1px solid rgba(14,14,14,0.08);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    .lb-table { width: 100%; border-collapse: collapse; }
+    .lb-table thead th {
+      background: var(--paper-2);
+      font-size: 0.65rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--ink-muted);
+      font-weight: 700;
+      padding: 0.9rem 1rem; text-align: left;
+    }
+    .lb-table thead th.num { text-align: center; width: 56px; }
+    .lb-table tbody tr { border-top: 1px solid rgba(14,14,14,0.05); }
+    .lb-table tbody tr:first-child { background: linear-gradient(90deg, rgba(217,191,130,0.18), transparent 60%); }
+    .lb-table td { padding: 1rem; font-size: 0.95rem; vertical-align: middle; }
+    .lb-table td.num { text-align: center; font-family:'Playfair Display',serif; font-weight: 700; font-size: 1.1rem; }
+    .lb-chip {
+      display: inline-flex; align-items: center; gap: 0.3rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 999px;
+      background: rgba(14,14,14,0.06);
+      font-size: 0.78rem;
+      font-weight: 500;
+      margin: 0.15rem 0.2rem 0.15rem 0;
+    }
+    .lb-chip.t1 { background: rgba(14,14,14,0.92); color:#fff; }
+    .lb-chip.t2 { background: rgba(107,30,46,0.92); color:#fff; }
+    .lb-chip.t3 { background: rgba(197,165,114,0.92); color:#fff; }
+    .lb-chip.t4 { background: rgba(139,111,71,0.92); color:#fff; }
+    .lb-chip.t5 { background: rgba(184,168,138,0.92); color:#fff; }
+
+    .empty { text-align: center; padding: 3rem 1rem; color: var(--ink-muted); }
+    .empty .icon { font-size: 2.4rem; margin-bottom: 0.6rem; }
+
+    /* ── Toast ─────────────────────────────────────────────────────── */
+    .toast {
+      position: fixed; bottom: 5.5rem; left: 50%;
+      transform: translateX(-50%) translateY(120%);
+      background: var(--ink); color: #fff;
+      padding: 0.9rem 1.4rem; border-radius: 999px;
+      font-size: 0.9rem; font-weight: 500;
+      transition: transform 0.3s ease;
+      z-index: 60;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* ── Responsive ────────────────────────────────────────────────── */
+    @media (max-width: 760px) {
+      .tier { grid-template-columns: 1fr; gap: 1rem; padding: 1.8rem 0; }
+      .tier-num { font-size: 2.6rem; display: inline-block; margin-right: 0.5rem; vertical-align: middle; }
+      .tier-name, .tier-label { display: inline-block; vertical-align: middle; margin: 0 0.3rem; }
+      .tier-pick { margin-top: 0.5rem; }
+      .hero { padding: 4rem 1.2rem 3.5rem; }
+      .section { padding: 2.5rem 1rem 7rem; }
+      .progress { right: 1rem; left: 1rem; bottom: 1rem; min-width: 0; }
+      .nav { gap: 1rem; }
+      .nav-btn { padding: 0.9rem 0.3rem; font-size: 0.68rem; letter-spacing: 0.1em; }
+    }
+  </style>
+</head>
+<body>
+
+<section class="hero">
+  <div class="hero-inner">
+    <div class="eyebrow">MH &middot; The 2026 Pool</div>
+    <h1>The MH <em>World Cup</em><br>Draft</h1>
+    <p class="hero-sub">Five tiers. Six picks. One trophy. Make your selections before the first whistle on June&nbsp;11, 2026.</p>
+    <div class="countdown" id="countdown">
+      <div class="countdown-cell"><div class="countdown-num" id="cd-d">—</div><div class="countdown-lbl">Days</div></div>
+      <div class="countdown-cell"><div class="countdown-num" id="cd-h">—</div><div class="countdown-lbl">Hours</div></div>
+      <div class="countdown-cell"><div class="countdown-num" id="cd-m">—</div><div class="countdown-lbl">Min</div></div>
+    </div>
+  </div>
+</section>
+
+<div class="nav-wrap">
+  <nav class="nav">
+    <button class="nav-btn active" data-tab="picks">Make Picks</button>
+    <button class="nav-btn" data-tab="leaderboard">Leaderboard</button>
+    <button class="nav-btn" data-tab="standings">Standings</button>
+  </nav>
+</div>
+
+<section class="section active" id="picks-sec">
+  <div class="wrap">
+    <div class="section-eyebrow">01 — Your Picks</div>
+    <h2 class="section-title">Build your slate</h2>
+    <p class="section-lead">Choose one team from each of the five tiers, plus a second from Tier 5. Tiles lock in once submitted; the leaderboard reveals as matches conclude.</p>
+
+    <div class="scoring" id="scoring"></div>
+
+    <div class="field">
+      <label for="name">Your name</label>
+      <input id="name" type="text" placeholder="e.g. Bailey" autocomplete="off">
+    </div>
+
+    <div id="tiers"></div>
+
+    <div class="submit-wrap">
+      <button class="submit-btn" id="submit">Submit My Picks <span class="arrow">→</span></button>
+      <div class="form-msg" id="msg"></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="leaderboard-sec">
+  <div class="wrap">
+    <div class="section-eyebrow">02 — Leaderboard</div>
+    <h2 class="section-title">The standings</h2>
+    <p class="section-lead">Live as results come in. Top score after the final wins the pool.</p>
+    <div id="lb-content"><div class="empty"><div class="icon">⏳</div><p>Loading picks…</p></div></div>
+  </div>
+</section>
+
+<section class="section" id="standings-sec">
+  <div class="wrap">
+    <div class="section-eyebrow">03 — Group Stage</div>
+    <h2 class="section-title">Live group tables</h2>
+    <p class="section-lead">Updated from ESPN once the tournament begins.</p>
+    <div id="standings-content"><div class="empty"><div class="icon">🕐</div><p><strong>Tournament starts June 11, 2026</strong></p><p style="margin-top:0.4rem;font-size:0.85rem">Group tables will appear here once matches begin.</p></div></div>
+  </div>
+</section>
+
+<div class="progress" id="progress">
+  <div class="progress-top"><span>Selections</span><strong><span id="pg-cur">0</span> / 6</strong></div>
+  <div class="progress-bar"><div class="progress-fill" id="pg-fill" style="width:0%"></div></div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const WC_TIERS = [
+  { id:1, name:"Tier One",   label:"Favourites",  cls:"t1", teams:[
+    { name:"Spain",flag:"🇪🇸",odds:5.50 },{ name:"France",flag:"🇫🇷",odds:6.00 },{ name:"England",flag:"🏴󠁧󠁢󠁥󠁮󠁧󠁿",odds:6.50 }
+  ]},
+  { id:2, name:"Tier Two",   label:"Contenders",  cls:"t2", teams:[
+    { name:"Brazil",flag:"🇧🇷",odds:9.00 },{ name:"Argentina",flag:"🇦🇷",odds:9.50 },{ name:"Portugal",flag:"🇵🇹",odds:10 },{ name:"Germany",flag:"🇩🇪",odds:13 }
+  ]},
+  { id:3, name:"Tier Three", label:"Dark Horses", cls:"t3", teams:[
+    { name:"Netherlands",flag:"🇳🇱",odds:19 },{ name:"Belgium",flag:"🇧🇪",odds:21 },{ name:"Norway",flag:"🇳🇴",odds:23 },{ name:"Colombia",flag:"🇨🇴",odds:46 },{ name:"Morocco",flag:"🇲🇦",odds:46 }
+  ]},
+  { id:4, name:"Tier Four",  label:"Outsiders",   cls:"t4", teams:[
+    { name:"Japan",flag:"🇯🇵",odds:61 },{ name:"USA",flag:"🇺🇸",odds:61 },{ name:"Mexico",flag:"🇲🇽",odds:76 },{ name:"Switzerland",flag:"🇨🇭",odds:76 },{ name:"Uruguay",flag:"🇺🇾",odds:76 },{ name:"Croatia",flag:"🇭🇷",odds:91 },{ name:"Ecuador",flag:"🇪🇨",odds:91 },{ name:"Senegal",flag:"🇸🇳",odds:91 },{ name:"Sweden",flag:"🇸🇪",odds:91 },{ name:"Turkiye",flag:"🇹🇷",odds:91 }
+  ]},
+  { id:5, name:"Tier Five",  label:"Long Shots",  cls:"t5", teams:[
+    { name:"Austria",flag:"🇦🇹",odds:126 },{ name:"Canada",flag:"🇨🇦",odds:226 },{ name:"Ivory Coast",flag:"🇨🇮",odds:251 },{ name:"Czechia",flag:"🇨🇿",odds:276 },{ name:"Egypt",flag:"🇪🇬",odds:276 },{ name:"Paraguay",flag:"🇵🇾",odds:276 },{ name:"Algeria",flag:"🇩🇿",odds:376 },{ name:"Ghana",flag:"🇬🇭",odds:376 },{ name:"Bosnia & Herzegovina",flag:"🇧🇦",odds:401 },{ name:"Iran",flag:"🇮🇷",odds:476 },{ name:"South Korea",flag:"🇰🇷",odds:476 },{ name:"Tunisia",flag:"🇹🇳",odds:476 },{ name:"Australia",flag:"🇦🇺",odds:501 },{ name:"Scotland",flag:"🏴󠁧󠁢󠁳󠁣󠁴󠁿",odds:501 },{ name:"Cape Verde",flag:"🇨🇻",odds:501 },{ name:"Curacao",flag:"🇨🇼",odds:501 },{ name:"DR Congo",flag:"🇨🇩",odds:501 },{ name:"Haiti",flag:"🇭🇹",odds:501 },{ name:"Iraq",flag:"🇮🇶",odds:501 },{ name:"Jordan",flag:"🇯🇴",odds:501 },{ name:"New Zealand",flag:"🇳🇿",odds:501 },{ name:"Panama",flag:"🇵🇦",odds:501 },{ name:"Qatar",flag:"🇶🇦",odds:501 },{ name:"Saudi Arabia",flag:"🇸🇦",odds:501 },{ name:"South Africa",flag:"🇿🇦",odds:501 },{ name:"Uzbekistan",flag:"🇺🇿",odds:501 }
+  ]}
+];
+const PICKS_PER_TIER = { 1:1, 2:1, 3:1, 4:1, 5:2 };
+const TOTAL_PICKS = Object.values(PICKS_PER_TIER).reduce((a,b)=>a+b,0);
+const selected = { 1:null, 2:null, 3:null, 4:null, 5:[] };
+
+const SCORING = [
+  ["Group win","2 pts"], ["Group draw","1 pt"], ["Advance from groups","+3 pts"],
+  ["Round of 32","4 pts"], ["Round of 16","5 pts"], ["Quarter-Final","7 pts"],
+  ["Semi-Final","10 pts"], ["Runner-up","12 pts"], ["Final","15 pts"]
+];
+
+// ── Boot ──
+document.querySelectorAll(".nav-btn").forEach(b => b.addEventListener("click", () => switchTab(b.dataset.tab)));
+renderScoring();
+renderTiers();
+startCountdown();
+document.getElementById("submit").addEventListener("click", submitPicks);
+
+function switchTab(tab) {
+  document.querySelectorAll(".nav-btn").forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
+  document.querySelectorAll(".section").forEach(s => s.classList.toggle("active", s.id === `${tab}-sec`));
+  window.scrollTo({ top: 0, behavior: "smooth" });
+  if (tab === "leaderboard") loadLeaderboard();
+  if (tab === "standings") loadStandings();
+}
+
+function renderScoring() {
+  document.getElementById("scoring").innerHTML = SCORING.map(([k,v]) =>
+    `<div class="scoring-row"><span>${k}</span><span>${v}</span></div>`).join("");
+}
+
+function renderTiers() {
+  const html = WC_TIERS.map(tier => {
+    const pills = tier.teams.map(t => {
+      const odds = t.odds >= 100 ? Math.round(t.odds) : t.odds.toFixed(2);
+      return `<div class="pill" data-tier="${tier.id}" data-team="${t.name}" onclick="selectPill(this,${tier.id},'${t.name.replace(/'/g,"\\'")}')">
+        <span class="flag">${t.flag}</span>
+        <span class="name">${t.name}</span>
+        <span class="odds">${odds}×</span>
+      </div>`;
+    }).join("");
+    const n = PICKS_PER_TIER[tier.id];
+    return `<div class="tier ${tier.cls}">
+      <div class="tier-meta">
+        <div class="tier-num">0${tier.id}</div>
+        <div class="tier-name">${tier.name}</div>
+        <div class="tier-label">${tier.label}</div>
+        <span class="tier-pick">Pick ${n}</span>
+      </div>
+      <div class="pills">${pills}</div>
+    </div>`;
+  }).join("");
+  document.getElementById("tiers").innerHTML = html;
+}
+
+function selectPill(el, tierId, teamName) {
+  const limit = PICKS_PER_TIER[tierId];
+  if (limit === 1) {
+    document.querySelectorAll(`.pill[data-tier="${tierId}"]`).forEach(p => p.classList.remove("selected"));
+    el.classList.add("selected");
+    selected[tierId] = teamName;
+  } else {
+    const arr = Array.isArray(selected[tierId]) ? selected[tierId] : [];
+    const idx = arr.indexOf(teamName);
+    if (idx >= 0) { arr.splice(idx,1); el.classList.remove("selected"); }
+    else {
+      if (arr.length >= limit) {
+        const drop = arr.shift();
+        document.querySelectorAll(`.pill[data-tier="${tierId}"][data-team="${drop}"]`).forEach(p => p.classList.remove("selected"));
+      }
+      arr.push(teamName); el.classList.add("selected");
+    }
+    selected[tierId] = arr;
+  }
+  updateProgress();
+}
+
+function updateProgress() {
+  let n = 0;
+  for (const k of Object.keys(selected)) {
+    const v = selected[k];
+    n += Array.isArray(v) ? v.length : (v ? 1 : 0);
+  }
+  document.getElementById("pg-cur").textContent = n;
+  document.getElementById("pg-fill").style.width = `${(n/TOTAL_PICKS)*100}%`;
+}
+
+async function submitPicks() {
+  const btn = document.getElementById("submit");
+  const msg = document.getElementById("msg");
+  const name = (document.getElementById("name").value || "").trim();
+  msg.className = "form-msg"; msg.textContent = "";
+
+  if (!name) { msg.className = "form-msg error"; msg.textContent = "Please enter your name."; return; }
+
+  const body = { name };
+  let complete = true;
+  WC_TIERS.forEach(t => {
+    const limit = PICKS_PER_TIER[t.id];
+    if (limit === 1) {
+      const v = selected[t.id] || "";
+      body[`tier${t.id}`] = v;
+      if (!v) complete = false;
+    } else {
+      const arr = Array.isArray(selected[t.id]) ? selected[t.id] : [];
+      body[`tier${t.id}`] = arr.join(" | ");
+      if (arr.length < limit) complete = false;
+    }
+  });
+  if (!complete) { msg.className = "form-msg error"; msg.textContent = "Complete every tier (Tier 5 needs 2 picks)."; return; }
+
+  btn.disabled = true; btn.innerHTML = "Submitting…";
+  try {
+    const res = await fetch("/api/wc/picks", { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(body) });
+    const data = await res.json();
+    if (res.ok && data.ok) {
+      msg.className = "form-msg success"; msg.textContent = `Picks locked in for ${name}.`;
+      btn.innerHTML = "Submitted ✓"; showToast(`Saved for ${name}`);
+    } else if (res.status === 409) {
+      msg.className = "form-msg error"; msg.textContent = "Picks already submitted for that name.";
+      btn.disabled = false; btn.innerHTML = "Submit My Picks <span class='arrow'>→</span>";
+    } else throw new Error(data.error || "Unknown error");
+  } catch (e) {
+    msg.className = "form-msg error"; msg.textContent = `Error: ${e.message}`;
+    btn.disabled = false; btn.innerHTML = "Submit My Picks <span class='arrow'>→</span>";
+  }
+}
+
+// ── Leaderboard ──
+async function loadLeaderboard() {
+  const c = document.getElementById("lb-content");
+  c.innerHTML = `<div class="empty"><div class="icon">⏳</div><p>Loading…</p></div>`;
+  try {
+    const [picksRes, scoresRes] = await Promise.all([fetch("/api/wc/picks"), fetch("/api/wc/scores")]);
+    const picks = await picksRes.json();
+    let matchData = null; try { matchData = await scoresRes.json(); } catch(_) {}
+    if (!Array.isArray(picks) || picks.length === 0) {
+      c.innerHTML = `<div class="empty"><div class="icon">🏆</div><p>No picks yet — be the first.</p></div>`; return;
+    }
+    const teamPts = buildPoints(matchData);
+    const splitT5 = s => (s||"").split("|").map(x=>x.trim()).filter(Boolean);
+    const rows = picks.map(p => {
+      const teams = [
+        { cls:"t1", name:p.tier1 },{ cls:"t2", name:p.tier2 },
+        { cls:"t3", name:p.tier3 },{ cls:"t4", name:p.tier4 },
+        ...splitT5(p.tier5).map(n => ({ cls:"t5", name:n }))
+      ];
+      const total = teams.reduce((s,t) => s + (teamPts[t.name] || 0), 0);
+      return { name:p.name, teams, total };
+    });
+    rows.sort((a,b) => b.total - a.total);
+    rows.forEach((r,i) => r.pos = (i>0 && r.total === rows[i-1].total) ? rows[i-1].pos : i+1);
+    const started = Object.keys(teamPts).length > 0;
+    let html = `<div class="lb-card"><table class="lb-table">
+      <thead><tr><th class="num">#</th><th>Player</th><th>Picks</th>${started?'<th class="num">Pts</th>':''}</tr></thead><tbody>`;
+    rows.forEach(r => {
+      const chips = r.teams.map(t => `<span class="lb-chip ${t.cls}">${t.name}${started && teamPts[t.name] ? ` · ${teamPts[t.name]}` : ""}</span>`).join("");
+      html += `<tr><td class="num">${r.pos}</td><td style="font-weight:700">${r.name}</td><td>${chips}</td>${started?`<td class="num">${r.total}</td>`:''}</tr>`;
+    });
+    html += `</tbody></table></div>`;
+    c.innerHTML = html;
+  } catch (e) {
+    c.innerHTML = `<div class="empty"><div class="icon">❌</div><p>Could not load: ${e.message}</p></div>`;
+  }
+}
+
+function buildPoints(d) {
+  const m = {}; if (!d || !d.events) return m;
+  try {
+    d.events.forEach(ev => {
+      const comp = ev?.competitions?.[0];
+      const done = ev?.status?.type?.completed;
+      if (!done) return;
+      const cs = comp?.competitors || []; if (cs.length < 2) return;
+      const h = cs.find(c => c.homeAway==="home"), a = cs.find(c => c.homeAway==="away");
+      if (!h || !a) return;
+      const hs = +h.score||0, as = +a.score||0;
+      const hn = h.team?.displayName||"", an = a.team?.displayName||"";
+      const round = (comp?.notes?.[0]?.headline || ev?.name || "").toLowerCase();
+      const pts = pointsFor(hs, as, round);
+      m[hn] = (m[hn]||0) + pts.h; m[an] = (m[an]||0) + pts.a;
+    });
+  } catch(_) {}
+  return m;
+}
+function pointsFor(hs, as, r) {
+  if (r.includes("group")) {
+    if (hs>as) return { h:2, a:0 }; if (as>hs) return { h:0, a:2 }; return { h:1, a:1 };
+  }
+  const win = r.includes("round of 32")?4 : r.includes("round of 16")?5 : r.includes("quarter")?7 : r.includes("semi")?10 : (r.includes("final")?15:0);
+  const lose = (r.includes("final") && !r.includes("semi") && !r.includes("quarter")) ? 12 : 0;
+  if (hs>as) return { h:win, a:lose }; if (as>hs) return { h:lose, a:win }; return { h:0, a:0 };
+}
+
+// ── Standings ──
+async function loadStandings() {
+  const c = document.getElementById("standings-content");
+  c.innerHTML = `<div class="empty"><div class="icon">⏳</div><p>Fetching tables…</p></div>`;
+  try {
+    const res = await fetch("/api/wc/standings");
+    const data = await res.json();
+    if (data.error || !data.children?.length) {
+      c.innerHTML = `<div class="empty"><div class="icon">🕐</div><p><strong>Tournament starts June 11, 2026</strong></p></div>`;
+      return;
+    }
+    c.innerHTML = `<div class="empty"><p>Standings render here once matches start.</p></div>`;
+  } catch {
+    c.innerHTML = `<div class="empty"><div class="icon">❌</div><p>Could not load.</p></div>`;
+  }
+}
+
+// ── Countdown ──
+function startCountdown() {
+  const target = new Date("2026-06-11T18:00:00Z").getTime();
+  const tick = () => {
+    const diff = target - Date.now();
+    if (diff <= 0) { document.getElementById("countdown").innerHTML = "<div class='countdown-cell'><div class='countdown-num'>LIVE</div></div>"; return; }
+    const d = Math.floor(diff/86400000);
+    const h = Math.floor(diff%86400000/3600000);
+    const m = Math.floor(diff%3600000/60000);
+    document.getElementById("cd-d").textContent = d;
+    document.getElementById("cd-h").textContent = h;
+    document.getElementById("cd-m").textContent = m;
+  };
+  tick(); setInterval(tick, 60000);
+}
+
+function showToast(msg) {
+  const t = document.getElementById("toast");
+  t.textContent = msg; t.classList.add("show");
+  setTimeout(() => t.classList.remove("show"), 3000);
+}
+</script>
+</body>
+</html>

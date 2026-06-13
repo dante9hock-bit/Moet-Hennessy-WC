@@ -7,6 +7,7 @@ import os
 import sys
 import urllib.request
 import time
+from concurrent.futures import ThreadPoolExecutor
 
 PORT = int(os.environ.get("PORT", 8080))
 
@@ -30,11 +31,12 @@ SUPABASE_HEADERS = {
 }
 
 ESPN_WC_SCOREBOARD = "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard"
-ESPN_WC_STANDINGS  = "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/standings"
+ESPN_CORE_GROUPS   = "https://sports.core.api.espn.com/v2/sports/soccer/leagues/fifa.world/seasons/2026/types/1/groups?lang=en&region=us"
 CACHE_TTL = 60  # seconds
 
-_wc_scores_cache   = {"data": None, "time": 0}
+_wc_scores_cache    = {"data": None, "time": 0}
 _wc_standings_cache = {"data": None, "time": 0}
+_espn_executor = ThreadPoolExecutor(max_workers=16)
 
 
 def supabase_request(method, path, body=None):
@@ -108,6 +110,134 @@ def fetch_espn(url, cache):
         return json.dumps({"error": str(e), "events": [], "children": []}).encode()
 
 
+def _get_json(url, timeout=8):
+    """Fetch a URL and parse JSON. Returns None on failure."""
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "WCPool/1.0"})
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            return json.loads(resp.read())
+    except Exception as e:
+        print(f"core.api fetch error for {url}: {e}")
+        return None
+
+
+def _stat(stats, name, default=0):
+    for s in stats or []:
+        if s.get("name") == name:
+            v = s.get("value")
+            try:
+                return int(v) if v is not None else default
+            except (TypeError, ValueError):
+                return default
+    return default
+
+
+def build_wc_standings():
+    """
+    Walk ESPN's core API to assemble the World Cup 2026 group standings.
+    Returns a dict shaped: { "children": [ { "name": "Group A", "standings": [rows] } ] }
+    where each row has team name, abbrev, GP/W/D/L/GF/GA/GD/Pts.
+    """
+    # 1. Group list
+    root = _get_json(ESPN_CORE_GROUPS)
+    if not root or not root.get("items"):
+        return {"error": "groups list unavailable", "children": []}
+
+    group_refs = [item["$ref"] for item in root["items"] if item.get("$ref")]
+
+    # 2. Group docs in parallel
+    groups = list(_espn_executor.map(_get_json, group_refs))
+
+    # 3. Each group has standings -> standings/0 ref
+    def resolve_standings(group):
+        if not group or not isinstance(group, dict):
+            return None
+        st_ref = (group.get("standings") or {}).get("$ref")
+        if not st_ref:
+            return None
+        st = _get_json(st_ref)
+        if not st or not st.get("items"):
+            return None
+        # Take the first standings entry ("overall")
+        entry_ref = st["items"][0].get("$ref")
+        if not entry_ref:
+            return None
+        entry = _get_json(entry_ref)
+        return {
+            "name": group.get("name") or group.get("abbreviation") or "Group",
+            "rows": entry.get("standings", []) if entry else []
+        }
+
+    resolved = list(_espn_executor.map(resolve_standings, groups))
+
+    # 4. Resolve every team ref in parallel (across all groups)
+    team_refs = set()
+    for r in resolved:
+        if not r:
+            continue
+        for row in r["rows"]:
+            tref = (row.get("team") or {}).get("$ref")
+            if tref:
+                team_refs.add(tref)
+
+    team_docs = {}
+    fetched = list(_espn_executor.map(_get_json, list(team_refs)))
+    for ref, doc in zip(team_refs, fetched):
+        if doc:
+            team_docs[ref] = doc
+
+    # 5. Build clean output
+    children = []
+    for r in resolved:
+        if not r:
+            continue
+        rows_out = []
+        for row in r["rows"]:
+            tref = (row.get("team") or {}).get("$ref", "")
+            tdoc = team_docs.get(tref, {})
+            stats = []
+            for rec in row.get("records", []):
+                if rec.get("type") == "total":
+                    stats = rec.get("stats", [])
+                    break
+            rows_out.append({
+                "team":    tdoc.get("displayName") or tdoc.get("name") or "?",
+                "abbrev":  tdoc.get("abbreviation") or "",
+                "logo":    (tdoc.get("logos") or [{}])[0].get("href", ""),
+                "gp":      _stat(stats, "gamesPlayed"),
+                "w":       _stat(stats, "wins"),
+                "d":       _stat(stats, "ties"),
+                "l":       _stat(stats, "losses"),
+                "gf":      _stat(stats, "pointsFor"),
+                "ga":      _stat(stats, "pointsAgainst"),
+                "gd":      _stat(stats, "pointDifferential"),
+                "pts":     _stat(stats, "points"),
+            })
+        # Sort by pts desc, then gd desc, then gf desc
+        rows_out.sort(key=lambda x: (-x["pts"], -x["gd"], -x["gf"]))
+        children.append({"name": r["name"], "standings": {"entries": rows_out}})
+
+    return {"children": children}
+
+
+def get_wc_standings():
+    """Cached wrapper around build_wc_standings()."""
+    now = time.time()
+    cache = _wc_standings_cache
+    if cache["data"] and (now - cache["time"]) < CACHE_TTL:
+        return cache["data"]
+    try:
+        data = json.dumps(build_wc_standings()).encode()
+        cache["data"] = data
+        cache["time"] = now
+        return data
+    except Exception as e:
+        print(f"build_wc_standings crashed: {e}")
+        if cache["data"]:
+            return cache["data"]
+        return json.dumps({"error": str(e), "children": []}).encode()
+
+
 class Handler(http.server.SimpleHTTPRequestHandler):
 
     def send_json(self, code, payload):
@@ -141,7 +271,7 @@ class Handler(http.server.SimpleHTTPRequestHandler):
             self.wfile.write(data if isinstance(data, bytes) else data.encode())
 
         elif self.path == "/api/wc/standings":
-            data = fetch_espn(ESPN_WC_STANDINGS, _wc_standings_cache)
+            data = get_wc_standings()
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
             self.send_header("Cache-Control", "max-age=30")

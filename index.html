@@ -379,6 +379,55 @@
     .empty { text-align: center; padding: 3rem 1rem; color: var(--ink-muted); }
     .empty .icon { font-size: 2.4rem; margin-bottom: 0.6rem; }
 
+    /* ── Group standings ───────────────────────────────────────────── */
+    .group-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
+      gap: 1.2rem;
+    }
+    .group-card {
+      background: #fff;
+      border: 1px solid rgba(14,14,14,0.08);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .group-head {
+      background: var(--paper-2);
+      padding: 0.7rem 1rem;
+      font-family: 'Playfair Display', serif;
+      font-size: 1.05rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+      border-bottom: 1px solid rgba(14,14,14,0.08);
+    }
+    .group-card table { width: 100%; border-collapse: collapse; }
+    .group-card thead th {
+      font-size: 0.6rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--ink-muted);
+      font-weight: 700;
+      padding: 0.55rem 0.4rem;
+      text-align: center;
+      border-bottom: 1px solid rgba(14,14,14,0.05);
+    }
+    .group-card tbody td {
+      padding: 0.55rem 0.4rem;
+      font-size: 0.82rem;
+      border-bottom: 1px solid rgba(14,14,14,0.04);
+    }
+    .group-card tbody tr:last-child td { border-bottom: none; }
+    .group-card .pos { width: 22px; text-align: center; font-weight: 700; color: var(--ink-muted); }
+    .group-card .team { display: flex; align-items: center; gap: 0.5rem; font-weight: 600; padding-left: 0.2rem; }
+    .group-card .team img { width: 18px; height: 18px; object-fit: contain; }
+    .group-card .num { text-align: center; font-variant-numeric: tabular-nums; }
+    .group-card .pts { font-weight: 800; color: var(--ink); }
+    .group-card .pos-gd { color: #1a6b2a; }
+    .group-card .neg-gd { color: #b13a2e; }
+    .group-card tr.qual { background: rgba(197,165,114,0.08); }
+    .group-card tr.qual .pos { color: var(--champagne-2); }
+    .group-card tr.qual-third { background: rgba(197,165,114,0.03); }
+
     /* ── Toast ─────────────────────────────────────────────────────── */
     .toast {
       position: fixed; bottom: 5.5rem; left: 50%;
@@ -703,12 +752,35 @@ async function loadStandings() {
     const res = await fetch("/api/wc/standings");
     const data = await res.json();
     if (data.error || !data.children?.length) {
-      c.innerHTML = `<div class="empty"><div class="icon">🕐</div><p><strong>Tournament starts June 11, 2026</strong></p></div>`;
+      c.innerHTML = `<div class="empty"><div class="icon">🕐</div><p><strong>Live tables not yet published.</strong></p><p style="margin-top:0.4rem;font-size:0.85rem">Check back once the first group games finish.</p></div>`;
       return;
     }
-    c.innerHTML = `<div class="empty"><p>Standings render here once matches start.</p></div>`;
-  } catch {
-    c.innerHTML = `<div class="empty"><div class="icon">❌</div><p>Could not load.</p></div>`;
+    const groups = data.children;
+    let html = `<div class="group-grid">`;
+    groups.forEach(g => {
+      const rows = (g.standings?.entries || []).map((r, i) => {
+        const qualClass = i < 2 ? "qual" : (i === 2 ? "qual-third" : "");
+        return `<tr class="${qualClass}">
+          <td class="pos">${i+1}</td>
+          <td class="team">${r.logo ? `<img src="${r.logo}" alt="" loading="lazy">` : ""}<span>${r.team}</span></td>
+          <td class="num">${r.gp}</td><td class="num">${r.w}</td><td class="num">${r.d}</td><td class="num">${r.l}</td>
+          <td class="num">${r.gf}</td><td class="num">${r.ga}</td>
+          <td class="num ${r.gd > 0 ? "pos-gd" : r.gd < 0 ? "neg-gd" : ""}">${r.gd > 0 ? "+" + r.gd : r.gd}</td>
+          <td class="num pts">${r.pts}</td>
+        </tr>`;
+      }).join("");
+      html += `<div class="group-card">
+        <div class="group-head">${g.name}</div>
+        <table>
+          <thead><tr><th></th><th></th><th>P</th><th>W</th><th>D</th><th>L</th><th>GF</th><th>GA</th><th>GD</th><th>PTS</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+    });
+    html += `</div>`;
+    c.innerHTML = html;
+  } catch (e) {
+    c.innerHTML = `<div class="empty"><div class="icon">❌</div><p>Could not load: ${e.message}</p></div>`;
   }
 }
 

@@ -30,7 +30,9 @@ SUPABASE_HEADERS = {
     "Prefer": "return=minimal",
 }
 
-ESPN_WC_SCOREBOARD = "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard"
+ESPN_WC_SCOREBOARD_BASE = "https://site.api.espn.com/apis/site/v2/sports/soccer/fifa.world/scoreboard"
+# Full 2026 World Cup window. ESPN supports YYYYMMDD-YYYYMMDD ranges on this endpoint.
+ESPN_WC_SCOREBOARD = f"{ESPN_WC_SCOREBOARD_BASE}?dates=20260611-20260719"
 ESPN_CORE_GROUPS   = "https://sports.core.api.espn.com/v2/sports/soccer/leagues/fifa.world/seasons/2026/types/1/groups?lang=en&region=us"
 CACHE_TTL = 60  # seconds
 

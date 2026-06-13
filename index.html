@@ -555,6 +555,17 @@ const selected = { 1:null, 2:null, 3:null, 4:null, 5:[] };
 const TEAM_FLAGS = {};
 WC_TIERS.forEach(tier => tier.teams.forEach(t => { TEAM_FLAGS[t.name] = t.flag; }));
 
+// Map ESPN's team display names → our canonical pool names.
+// Keeps scoring resilient to ESPN's accents, hyphens, abbreviations.
+const ESPN_TO_POOL = {
+  "Bosnia-Herzegovina": "Bosnia & Herzegovina",
+  "United States":      "USA",
+  "Türkiye":            "Turkiye",
+  "Congo DR":           "DR Congo",
+  "Curaçao":            "Curacao"
+};
+const canon = name => ESPN_TO_POOL[name] || name;
+
 const SCORING = [
   ["Group win","2 pts"], ["Group draw","1 pt"], ["Advance from groups","+3 pts"],
   ["Round of 32","4 pts"], ["Round of 16","5 pts"], ["Quarter-Final","7 pts"],
@@ -568,13 +579,41 @@ renderTiers();
 startCountdown();
 document.getElementById("submit").addEventListener("click", submitPicks);
 
+let _lbPollTimer = null;
+let _stPollTimer = null;
+const LB_POLL_MS = 60000;
+const ST_POLL_MS = 60000;
+
 function switchTab(tab) {
   document.querySelectorAll(".nav-btn").forEach(b => b.classList.toggle("active", b.dataset.tab === tab));
   document.querySelectorAll(".section").forEach(s => s.classList.toggle("active", s.id === `${tab}-sec`));
   window.scrollTo({ top: 0, behavior: "smooth" });
-  if (tab === "leaderboard") loadLeaderboard();
-  if (tab === "standings") loadStandings();
+
+  // Stop both pollers on every switch; restart only for the visible tab.
+  if (_lbPollTimer) { clearInterval(_lbPollTimer); _lbPollTimer = null; }
+  if (_stPollTimer) { clearInterval(_stPollTimer); _stPollTimer = null; }
+
+  if (tab === "leaderboard") {
+    loadLeaderboard();
+    _lbPollTimer = setInterval(() => {
+      if (!document.hidden) loadLeaderboard();
+    }, LB_POLL_MS);
+  }
+  if (tab === "standings") {
+    loadStandings();
+    _stPollTimer = setInterval(() => {
+      if (!document.hidden) loadStandings();
+    }, ST_POLL_MS);
+  }
 }
+
+// Refresh on tab refocus.
+document.addEventListener("visibilitychange", () => {
+  if (document.hidden) return;
+  const active = document.querySelector(".nav-btn.active")?.dataset.tab;
+  if (active === "leaderboard") loadLeaderboard();
+  if (active === "standings")   loadStandings();
+});
 
 function renderScoring() {
   document.getElementById("scoring").innerHTML = SCORING.map(([k,v]) =>
@@ -716,6 +755,22 @@ async function loadLeaderboard() {
   }
 }
 
+function detectRound(ev) {
+  // ESPN signals: season.slug (e.g. "group-stage", "round-of-32"), season.type (numeric),
+  // and notes[0].headline as a fallback.
+  const season = ev?.season || {};
+  const slug = (season.slug || "").toLowerCase();
+  const headline = (ev?.competitions?.[0]?.notes?.[0]?.headline || ev?.name || "").toLowerCase();
+  const blob = `${slug} ${headline}`;
+  if (slug === "group-stage" || season.type === 13802 || blob.includes("group")) return "group";
+  if (blob.includes("round-of-32") || blob.includes("round of 32")) return "r32";
+  if (blob.includes("round-of-16") || blob.includes("round of 16")) return "r16";
+  if (blob.includes("quarter")) return "qf";
+  if (blob.includes("semi"))    return "sf";
+  if (blob.includes("final"))   return "final";
+  return "";
+}
+
 function buildPoints(d) {
   const m = {}; if (!d || !d.events) return m;
   try {
@@ -727,21 +782,42 @@ function buildPoints(d) {
       const h = cs.find(c => c.homeAway==="home"), a = cs.find(c => c.homeAway==="away");
       if (!h || !a) return;
       const hs = +h.score||0, as = +a.score||0;
-      const hn = h.team?.displayName||"", an = a.team?.displayName||"";
-      const round = (comp?.notes?.[0]?.headline || ev?.name || "").toLowerCase();
+      const hn = canon(h.team?.displayName||""), an = canon(a.team?.displayName||"");
+      const round = detectRound(ev);
       const pts = pointsFor(hs, as, round);
       m[hn] = (m[hn]||0) + pts.h; m[an] = (m[an]||0) + pts.a;
+      // Advancement bonus: an unbeaten group-stage finisher who later appears in any knockout
+      // round earned +3 for advancing. We award it on first knockout appearance.
     });
+    // Award +3 advance-from-groups bonus to every team that appears in a knockout match.
+    const advanced = new Set();
+    d.events.forEach(ev => {
+      const round = detectRound(ev);
+      if (round && round !== "group") {
+        (ev?.competitions?.[0]?.competitors || []).forEach(c => {
+          const n = canon(c?.team?.displayName);
+          // ESPN uses placeholders like "Group A Winner" before draws fill — skip those.
+          if (n && !n.includes("Winner") && !n.includes("Place")) advanced.add(n);
+        });
+      }
+    });
+    advanced.forEach(n => { m[n] = (m[n] || 0) + 3; });
   } catch(_) {}
   return m;
 }
-function pointsFor(hs, as, r) {
-  if (r.includes("group")) {
-    if (hs>as) return { h:2, a:0 }; if (as>hs) return { h:0, a:2 }; return { h:1, a:1 };
+
+function pointsFor(hs, as, round) {
+  if (round === "group") {
+    if (hs > as) return { h:2, a:0 };
+    if (as > hs) return { h:0, a:2 };
+    return { h:1, a:1 };
   }
-  const win = r.includes("round of 32")?4 : r.includes("round of 16")?5 : r.includes("quarter")?7 : r.includes("semi")?10 : (r.includes("final")?15:0);
-  const lose = (r.includes("final") && !r.includes("semi") && !r.includes("quarter")) ? 12 : 0;
-  if (hs>as) return { h:win, a:lose }; if (as>hs) return { h:lose, a:win }; return { h:0, a:0 };
+  const winPts = { r32:4, r16:5, qf:7, sf:10, final:15 }[round] || 0;
+  // Runner-up = lose the final
+  const losePts = round === "final" ? 12 : 0;
+  if (hs > as) return { h:winPts, a:losePts };
+  if (as > hs) return { h:losePts, a:winPts };
+  return { h:0, a:0 };
 }
 
 // ── Standings ──

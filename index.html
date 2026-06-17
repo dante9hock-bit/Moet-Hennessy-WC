@@ -169,6 +169,14 @@
       margin-bottom: 0.7rem;
     }
     .section-lead { color: var(--ink-soft); max-width: 560px; margin-bottom: 2.8rem; font-size: 0.98rem; }
+    .rules-title {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.4rem;
+      letter-spacing: -0.01em;
+      margin-bottom: 0.4rem;
+    }
+    .rules-lead { color: var(--ink-soft); font-size: 0.9rem; margin-bottom: 1.2rem; }
+    #lb-content { margin-top: 3rem; }
 
     /* ── Scoring strip ─────────────────────────────────────────────── */
     .scoring {
@@ -478,56 +486,33 @@
 
 <div class="nav-wrap">
   <nav class="nav">
-    <button class="nav-btn active" data-tab="picks">Make Picks</button>
-    <button class="nav-btn" data-tab="leaderboard">Leaderboard</button>
+    <button class="nav-btn active" data-tab="leaderboard">Leaderboard</button>
     <button class="nav-btn" data-tab="standings">Standings</button>
   </nav>
 </div>
 
-<section class="section active" id="picks-sec">
+<section class="section active" id="leaderboard-sec">
   <div class="wrap">
-    <div class="section-eyebrow">01 — Your Picks</div>
-    <h2 class="section-title">Build your slate</h2>
-    <p class="section-lead">Choose one team from each of the five tiers, plus a second from Tier 5. Tiles lock in once submitted; the leaderboard reveals as matches conclude.</p>
-
-    <div class="scoring" id="scoring"></div>
-
-    <div class="field">
-      <label for="name">Your name</label>
-      <input id="name" type="text" placeholder="e.g. Bailey" autocomplete="off">
-    </div>
-
-    <div id="tiers"></div>
-
-    <div class="submit-wrap">
-      <button class="submit-btn" id="submit">Submit My Picks <span class="arrow">→</span></button>
-      <div class="form-msg" id="msg"></div>
-    </div>
-  </div>
-</section>
-
-<section class="section" id="leaderboard-sec">
-  <div class="wrap">
-    <div class="section-eyebrow">02 — Leaderboard</div>
+    <div class="section-eyebrow">01 — Leaderboard</div>
     <h2 class="section-title">The standings</h2>
     <p class="section-lead">Live as results come in. Top score after the final wins the pool.</p>
+
+    <h3 class="rules-title">Scoring system</h3>
+    <p class="rules-lead">How points accumulate for each team across the tournament.</p>
+    <div class="scoring" id="scoring"></div>
+
     <div id="lb-content"><div class="empty"><div class="icon">⏳</div><p>Loading picks…</p></div></div>
   </div>
 </section>
 
 <section class="section" id="standings-sec">
   <div class="wrap">
-    <div class="section-eyebrow">03 — Group Stage</div>
+    <div class="section-eyebrow">02 — Group Stage</div>
     <h2 class="section-title">Live group tables</h2>
     <p class="section-lead">Updated from ESPN once the tournament begins.</p>
     <div id="standings-content"><div class="empty"><div class="icon">🕐</div><p><strong>Tournament starts June 11, 2026</strong></p><p style="margin-top:0.4rem;font-size:0.85rem">Group tables will appear here once matches begin.</p></div></div>
   </div>
 </section>
-
-<div class="progress" id="progress">
-  <div class="progress-top"><span>Selections</span><strong><span id="pg-cur">0</span> / 6</strong></div>
-  <div class="progress-bar"><div class="progress-fill" id="pg-fill" style="width:0%"></div></div>
-</div>
 
 <div class="toast" id="toast"></div>
 
@@ -567,7 +552,7 @@ const ESPN_TO_POOL = {
 const canon = name => ESPN_TO_POOL[name] || name;
 
 const SCORING = [
-  ["Group win","2 pts"], ["Group draw","1 pt"], ["Advance from groups","+3 pts"],
+  ["Group win","2 pts"], ["Group draw","1 pt"], ["Advance from groups","3 pts"],
   ["Round of 32","4 pts"], ["Round of 16","5 pts"], ["Quarter-Final","7 pts"],
   ["Semi-Final","10 pts"], ["Runner-up","12 pts"], ["Final","15 pts"]
 ];
@@ -575,9 +560,9 @@ const SCORING = [
 // ── Boot ──
 document.querySelectorAll(".nav-btn").forEach(b => b.addEventListener("click", () => switchTab(b.dataset.tab)));
 renderScoring();
-renderTiers();
 startCountdown();
-document.getElementById("submit").addEventListener("click", submitPicks);
+// Picks are closed — kick straight into the leaderboard (which also starts polling).
+switchTab("leaderboard");
 
 let _lbPollTimer = null;
 let _stPollTimer = null;

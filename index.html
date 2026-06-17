@@ -557,13 +557,6 @@ const SCORING = [
   ["Semi-Final","10 pts"], ["Runner-up","12 pts"], ["Final","15 pts"]
 ];
 
-// ── Boot ──
-document.querySelectorAll(".nav-btn").forEach(b => b.addEventListener("click", () => switchTab(b.dataset.tab)));
-renderScoring();
-startCountdown();
-// Picks are closed — kick straight into the leaderboard (which also starts polling).
-switchTab("leaderboard");
-
 let _lbPollTimer = null;
 let _stPollTimer = null;
 const LB_POLL_MS = 60000;
@@ -866,6 +859,15 @@ function showToast(msg) {
   t.textContent = msg; t.classList.add("show");
   setTimeout(() => t.classList.remove("show"), 3000);
 }
+
+// ── Boot ──────────────────────────────────────────────────────────────────────
+// All declarations above this line. Calling switchTab earlier hit a TDZ error
+// on the `let _lbPollTimer` declared further down — that crashed the boot and
+// the leaderboard never loaded.
+document.querySelectorAll(".nav-btn").forEach(b => b.addEventListener("click", () => switchTab(b.dataset.tab)));
+renderScoring();
+startCountdown();
+switchTab("leaderboard");
 </script>
 </body>
 </html>
